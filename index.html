@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Night Companion</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f3;
+      --bg3: #ededea;
+      --text: #1a1a18;
+      --text2: #5f5e5a;
+      --text3: #909088;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --accent: #185fa5;
+      --accent-bg: #e6f1fb;
+      --accent-text: #0c447c;
+      --success-bg: #eaf3de;
+      --success-text: #3b6d11;
+      --warn-bg: #faeeda;
+      --warn-text: #633806;
+      --err-bg: #fcebeb;
+      --err-text: #a32d2d;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1a;
+        --bg2: #252523;
+        --bg3: #2e2e2c;
+        --text: #e8e6df;
+        --text2: #a8a69f;
+        --text3: #6e6c67;
+        --border: rgba(255,255,255,0.1);
+        --border2: rgba(255,255,255,0.2);
+        --accent: #378add;
+        --accent-bg: #0c2d4a;
+        --accent-text: #85b7eb;
+        --success-bg: #172c08;
+        --success-text: #97c459;
+        --warn-bg: #2a1f05;
+        --warn-text: #fac775;
+        --err-bg: #2a0a0a;
+        --err-text: #f09595;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .app { max-width: 480px; margin: 0 auto; padding-bottom: 2rem; }
+
+    header { padding: 1.25rem 0 1rem; }
+    header h1 { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    header p { font-size: 13px; color: var(--text2); }
+
+    .card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 12px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 10px;
+    }
+
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color .15s;
+      appearance: none;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(55,138,221,0.15);
+    }
+
+    textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23909088' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+
+    .input-row { display: flex; gap: 8px; }
+    .input-row input { flex: 1; }
+    .input-row button {
+      padding: 9px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      color: var(--accent-text);
+      background: var(--accent-bg);
+      border: 0.5px solid var(--accent);
+      border-radius: var(--radius);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .input-row button:hover { opacity: .88; }
+    .input-row button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .bgg-status { font-size: 12px; margin-top: 5px; color: var(--text3); }
+    .bgg-status.ok { color: var(--success-text); }
+    .bgg-status.err { color: var(--err-text); }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .mode-btn {
+      padding: 10px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg2);
+      cursor: pointer;
+      text-align: left;
+      transition: all .15s;
+    }
+    .mode-btn:hover { background: var(--bg3); }
+    .mode-btn.active { border: 2px solid var(--accent); background: var(--accent-bg); }
+    .mode-title { font-size: 13px; font-weight: 500; display: block; color: var(--text); margin-bottom: 2px; }
+    .mode-btn.active .mode-title { color: var(--accent-text); }
+    .mode-sub { font-size: 11px; color: var(--text3); display: block; }
+    .mode-btn.active .mode-sub { color: var(--accent-text); opacity: .8; }
+
+    .collapsible { overflow: hidden; max-height: 0; transition: max-height .2s ease; }
+    .collapsible.open { max-height: 300px; }
+
+    .upload-btn {
+      display: block;
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text2);
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-align: center;
+      transition: background .15s;
+    }
+    .upload-btn:hover { background: var(--bg3); }
+    .file-name { font-size: 12px; color: var(--text3); margin-top: 5px; text-align: center; }
+    .file-name.loaded { color: var(--success-text); }
+
+    .divider { height: 0.5px; background: var(--border); margin: 12px 0; }
+
+    .ask-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--accent-text);
+      background: var(--accent-bg);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .ask-btn:hover { opacity: .88; }
+    .ask-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .result-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--bg2);
+    }
+    .result-game { font-size: 13px; font-weight: 600; color: var(--text); }
+    .result-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--success-bg);
+      color: var(--success-text);
+      font-weight: 500;
+    }
+    .result-body {
+      padding: 1rem 1.25rem;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+
+    .alert {
+      padding: 12px 1rem;
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .alert-warn { background: var(--warn-bg); color: var(--warn-text); border: 0.5px solid #ef9f27; }
+    .alert-err  { background: var(--err-bg);  color: var(--err-text);  border: 0.5px solid #f09595; }
+    .alert strong { display: block; font-size: 14px; margin-bottom: 3px; }
+    .alert code { background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+    .spinner {
+      display: inline-block;
+      width: 13px; height: 13px;
+      border: 2px solid var(--accent-text);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .game-list {
+      margin-top: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg2);
+    }
+    .game-item {
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      border-bottom: 0.5px solid var(--border);
+      transition: background .1s;
+    }
+    .game-item:last-child { border-bottom: none; }
+    .game-item:hover { background: var(--bg3); }
+    .game-item-year { font-size: 11px; color: var(--text3); margin-left: 6px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>Game night companion</h1>
+    <p>Strategy, rules &amp; faction advice — at the table</p>
+  </header>
+
+  <div id="config-warning" class="alert alert-warn" style="display:none">
+    <strong>API key not found</strong>
+    Create a <code>config.js</code> file with your Groq API key. See the README for setup instructions.
+  </div>
+
+  <!-- BGG Collection -->
+  <div class="card">
+    <div class="section-label">Your BGG collection (optional)</div>
+    <div class="field">
+      <label>BGG username — load your game library</label>
+      <div class="input-row">
+        <input type="text" id="bgg-username" placeholder="Your BGG username..." autocomplete="off" />
+        <button id="bgg-btn" onclick="loadBGGCollection()">Load</button>
+      </div>
+      <p class="bgg-status" id="bgg-status"></p>
+    </div>
+    <div class="collapsible" id="collection-area">
+      <div class="field" style="margin-top:8px">
+        <label>Pick from your library</label>
+        <input type="text" id="collection-search" placeholder="Search your games..." oninput="filterCollection()" />
+        <div class="game-list" id="game-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Details -->
+  <div class="card">
+    <div class="section-label">Game details</div>
+    <div class="field">
+      <label>Game title</label>
+      <input type="text" id="game-title" placeholder="e.g. Dune Imperium, Kanban EV..." autocomplete="off" />
+    </div>
+    <div class="field">
+      <label>Player count</label>
+      <select id="player-count">
+        <option value="">Select player count</option>
+        <option>2 players</option>
+        <option>3 players</option>
+        <option>4 players</option>
+        <option>5 players</option>
+        <option>6+ players</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Mode -->
+  <div class="card">
+    <div class="section-label">What do you need?</div>
+    <div class="mode-grid">
+      <button class="mode-btn active" onclick="setMode('strategy')" id="mode-strategy">
+        <span class="mode-title">Opening strategy</span>
+        <span class="mode-sub">First-play priorities</span>
+      </button>
+      <button class="mode-btn" onclick="setMode('mistakes')" id="mode-mistakes">
+        <span class="mode-title">Beginner mistakes</span>
+        <span class="mode-sub">What to avoid</span>
+      </button>
+      <button class="mode-btn" onclick="setMode('faction')" id="mode-faction">
+        <span class="mode-title">Faction / character</span>
+        <span class="mode-sub">Who to pick &amp; how</span>
+      </button>
+      <button class="mode-btn" onclick="setMode('rules')" id="mode-rules">
+        <span class="mode-title">Rules Q&amp;A</span>
+        <span class="mode-sub">Settle a dispute</span>
+      </button>
+    </div>
+
+    <div class="collapsible" id="faction-field">
+      <div style="height:10px"></div>
+      <div class="field">
+        <label>Your faction or character (optional)</label>
+        <input type="text" id="faction-input" placeholder="e.g. Atreides, Bene Gesserit..." />
+      </div>
+    </div>
+
+    <div class="collapsible" id="rules-field">
+      <div style="height:10px"></div>
+      <div class="field">
+        <label>Your rules question</label>
+        <textarea id="rules-question" placeholder="Describe the situation or paste the exact rule text..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rulebook -->
+  <div class="card">
+    <div class="section-label">Rulebook (optional but recommended)</div>
+    <div class="field">
+      <label class="upload-btn" for="pdf-upload">Upload rulebook PDF</label>
+      <input type="file" id="pdf-upload" accept=".pdf" style="display:none" onchange="handleFile(this)" />
+      <p class="file-name" id="file-name">No file selected — download from BGG for best results</p>
+    </div>
+    <div class="divider"></div>
+    <div class="field">
+      <label>Or paste a specific rule</label>
+      <textarea id="pasted-rule" placeholder="Paste rule text here for precise mid-game Q&amp;A..."></textarea>
+    </div>
+  </div>
+
+  <button class="ask-btn" id="ask-btn" onclick="askCompanion()">Ask the companion</button>
+
+  <div id="result-area"></div>
+
+</div>
+
+<script src="config.js" onerror="handleConfigError()"></script>
+<script>
+  let currentMode = 'strategy';
+  let pdfBase64 = null;
+  let bggCollection = [];
+
+  function handleConfigError() {
+    document.getElementById('config-warning').style.display = 'block';
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    ['strategy','mistakes','faction','rules'].forEach(m =>
+      document.getElementById('mode-'+m).classList.toggle('active', m === mode)
+    );
+    document.getElementById('faction-field').classList.toggle('open', mode === 'faction');
+    document.getElementById('rules-field').classList.toggle('open', mode === 'rules');
+  }
+
+  function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const nameEl = document.getElementById('file-name');
+    nameEl.textContent = file.name;
+    nameEl.classList.add('loaded');
+    const reader = new FileReader();
+    reader.onload = e => { pdfBase64 = e.target.result.split(',')[1]; };
+    reader.readAsDataURL(file);
+  }
+
+  async function loadBGGCollection() {
+    const username = document.getElementById('bgg-username').value.trim();
+    if (!username) return;
+    const btn = document.getElementById('bgg-btn');
+    const status = document.getElementById('bgg-status');
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+    status.textContent = 'Fetching your collection...';
+    status.className = 'bgg-status';
+
+    try {
+      // BGG API sometimes returns 202 while processing — retry up to 3 times
+      let xml, attempts = 0;
+      while (attempts < 4) {
+        const res = await fetch(`https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&own=1&excludesubtype=boardgameexpansion&stats=0`);
+        if (res.status === 202) {
+          attempts++;
+          await new Promise(r => setTimeout(r, 2500));
+          continue;
+        }
+        xml = await res.text();
+        break;
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xml, 'text/xml');
+      const error = doc.querySelector('error message');
+      if (error) throw new Error(error.textContent);
+
+      const items = doc.querySelectorAll('item');
+      bggCollection = Array.from(items).map(item => ({
+        id: item.getAttribute('objectid'),
+        name: item.querySelector('name')?.textContent || 'Unknown',
+        year: item.querySelector('yearpublished')?.textContent || ''
+      })).sort((a,b) => a.name.localeCompare(b.name));
+
+      if (bggCollection.length === 0) throw new Error('No owned games found for this username');
+
+      status.textContent = `${bggCollection.length} games loaded`;
+      status.className = 'bgg-status ok';
+      document.getElementById('collection-area').classList.add('open');
+      renderCollection(bggCollection);
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+      status.className = 'bgg-status err';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Load';
+  }
+
+  function renderCollection(games) {
+    const list = document.getElementById('game-list');
+    list.innerHTML = games.slice(0, 100).map(g =>
+      `<div class="game-item" onclick="selectGame('${g.name.replace(/'/g,"\\'")}')">
+        ${g.name}<span class="game-item-year">${g.year}</span>
+      </div>`
+    ).join('');
+  }
+
+  function filterCollection() {
+    const q = document.getElementById('collection-search').value.toLowerCase();
+    const filtered = bggCollection.filter(g => g.name.toLowerCase().includes(q));
+    renderCollection(filtered);
+  }
+
+  function selectGame(name) {
+    document.getElementById('game-title').value = name;
+    document.getElementById('game-title').focus();
+  }
+
+  function buildPrompt() {
+    const game = document.getElementById('game-title').value.trim();
+    const players = document.getElementById('player-count').value;
+    const pastedRule = document.getElementById('pasted-rule').value.trim();
+    const faction = document.getElementById('faction-input').value.trim();
+    const rulesQ = document.getElementById('rules-question').value.trim();
+
+    const ctx = [
+      game ? `Game: ${game}` : '',
+      players ? `Player count: ${players}` : '',
+      pastedRule ? `Relevant rule text:\n"""\n${pastedRule}\n"""` : ''
+    ].filter(Boolean).join('\n');
+
+    const prompts = {
+      strategy: `Give me a concise opening strategy for a first or second play of this game at ${players || 'this player count'}. Cover: the 2-3 most important priorities in the first few rounds, one key resource or mechanic to focus on early, and a pacing tip. Keep it scannable — I will be reading this at the table.`,
+      mistakes: `What are the 4-5 most common beginner mistakes in this game? For each, briefly explain why players make it and what to do instead. Keep it punchy and scannable for someone sitting down to play right now.`,
+      faction: `${faction ? `I am playing as ${faction}.` : 'Help me choose a faction or character.'} Give me: a one-line playstyle summary, 2-3 key strengths to lean into, one trap or weakness to watch out for, and a suggested opening priority. Tailor to ${players || 'the player count'} if relevant.`,
+      rules: `Rules question: ${rulesQ || 'Please clarify the rule text provided.'} Answer clearly and precisely. If rule text is provided, reference it directly. Note any ambiguity and give the most common community ruling.`
+    };
+
+    return `${ctx}\n\n${prompts[currentMode]}`;
+  }
+
+  async function askCompanion() {
+    const game = document.getElementById('game-title').value.trim();
+    if (!game) { alert('Please enter a game title first.'); return; }
+
+    if (typeof GROQ_API_KEY === 'undefined' || !GROQ_API_KEY) {
+      document.getElementById('config-warning').style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('ask-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Thinking...';
+    document.getElementById('result-area').innerHTML = '';
+
+    const modeLabels = { strategy: 'Opening strategy', mistakes: 'Beginner mistakes', faction: 'Faction advice', rules: 'Rules Q&A' };
+
+    // Groq doesn't support PDF documents — include text content only
+    const userContent = buildPrompt();
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert board game strategist and rules advisor with deep knowledge of modern strategy games, euro games, deck builders, and co-op games. Give concise, practical advice for players at the table who need quick, actionable guidance. Use short paragraphs or brief numbered lists. No markdown headers or bold text. Be direct and specific, never generic.'
+            },
+            { role: 'user', content: userContent }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'API error');
+
+      const text = data.choices?.[0]?.message?.content || 'No response received.';
+      const resultArea = document.getElementById('result-area');
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.innerHTML = `
+        <div class="result-header">
+          <span class="result-game">${game}</span>
+          <span class="result-badge">${modeLabels[currentMode]}</span>
+        </div>
+        <div class="result-body">${text}</div>`;
+      resultArea.appendChild(card);
+
+    } catch (err) {
+      const errDiv = document.createElement('div');
+      errDiv.className = 'alert alert-err';
+      errDiv.innerHTML = `<strong>Something went wrong</strong>${err.message || 'Check your API key in config.js.'}`;
+      document.getElementById('result-area').appendChild(errDiv);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Ask the companion';
+  }
+</script>
+</body>
+</html>
